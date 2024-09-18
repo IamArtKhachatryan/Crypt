@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+
+void encrypt(std::string& text, const char alphabet[], const char key[]) {
+    for (size_t i = 0; i < text.size(); ++i) {
+        for (size_t j = 0; j < 26; ++j) {
+            if (text[i] == alphabet[j]) {
+                text[i] = key[j]; 
+                break;
+            }
+        }
+    }
+    std::cout << "Encrypted text: " << text << std::endl; 
+}
+
+void decrypt(std::string& text, const char alphabet[], const char key[]) {
+    for (size_t i = 0; i < text.size(); ++i) {
+        for (size_t j = 0; j < 26; ++j) {
+            if (text[i] == key[j]) {
+                text[i] = alphabet[j]; 
+                break;
+            }
+        }
+    }
+    std::cout << "Decrypted text: " << text << std::endl; 
+}
+
+int main() {
+    char alphabet[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 
+                       'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 
+                       'u', 'v', 'w', 'x', 'y', 'z'};
+
+    char key[] = {'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 
+                  'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 
+                  'h', 'i', 'j', 'k', 'l', 'm'};
+
+    std::string text;
+    std::cout << "Enter the text to encrypt: ";
+    std::getline(std::cin, text);
+
+    encrypt(text, alphabet, key); 
+
+   
+    std::string encryptedText = text; 
+    std::cout << "Enter the text to decrypt: ";
+    std::getline(std::cin, text);
+    
+    decrypt(text, alphabet, key); 
+
+    return 0;
+}
