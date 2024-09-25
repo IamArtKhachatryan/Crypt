@@ -1,0 +1,56 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+class Crypto {
+public:
+    virtual std::string encrypt(const std::string& plaintext) = 0;
+    virtual std::string decrypt(const std::string& ciphertext) = 0;
+    virtual ~Crypto() = default;
+};
+
+class SimpleSubstitution : public Crypto {
+private:
+    std::unordered_map<char, char> encryptMap;
+    std::unordered_map<char, char> decryptMap;
+
+public:
+    SimpleSubstitution() {
+        const std::string key = "EQWRTYUOPIASDFGHJKLZXCVBNM";
+        const std::string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        for (size_t i = 0; i < alphabet.length(); ++i) {
+            encryptMap[alphabet[i]] = key[i];
+            decryptMap[key[i]] = alphabet[i];
+        }
+    }
+
+    std::string encrypt(const std::string& plaintext) override {
+        std::string ciphertext;
+        for (char ch : plaintext) {
+            ciphertext += (isupper(ch) ? encryptMap[ch] : ch);
+        }
+        return ciphertext;
+    }
+
+    std::string decrypt(const std::string& ciphertext) override {
+        std::string plaintext;
+        for (char ch : ciphertext) {
+            plaintext += (isupper(ch) ? decryptMap[ch] : ch);
+        }
+        return plaintext;
+    }
+};
+
+int main() {
+    SimpleSubstitution cipher;
+    std::string plaintext = "MY WORLD";
+    std::string encrypted = cipher.encrypt(plaintext);
+    std::string decrypted = cipher.decrypt(encrypted);
+
+    std::cout << "Plaintext: " << plaintext << std::endl;
+    std::cout << "Encrypted: " << encrypted << std::endl;
+    std::cout << "Decrypted: " << decrypted << std::endl;
+
+    return 0;
+}
