@@ -1,0 +1,43 @@
+#include <iostream>
+#include <string>
+
+class MyCrypt {
+public:
+    virtual std::string encrypt(const std::string &text, int key) = 0;
+    virtual std::string decrypt(const std::string &text, int key) = 0;
+};
+
+class CesarAlgorithm : public MyCrypt {
+public:
+    std::string encrypt(const std::string &text, int key) override {
+        std::string result = "";
+        int n = 256;
+        for (char c : text) {
+            result += static_cast<char>((c + key) % n);
+        }
+        return result;
+    }
+
+    std::string decrypt(const std::string &text, int key) override {
+        std::string result = "";
+        int n = 256;
+        for (char c : text) {
+            result += static_cast<char>((c - key + n) % n);
+        }
+        return result;
+    }
+};
+
+int main() {
+    CesarAlgorithm caesar;
+    std::string message = "Hello my name is, Артур! #123 @*&^%";
+    int key = 5;
+
+    std::string encrypted = caesar.encrypt(message, key);
+    std::cout << "Encrypted: " << encrypted << std::endl;
+    
+    std::string decrypted = caesar.decrypt(encrypted, key);
+    std::cout << "Decrypted: " << decrypted << std::endl;
+
+    return 0;
+}
