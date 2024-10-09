@@ -1,0 +1,235 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+class Crypto {
+public:
+    virtual std::string encrypt(const std::string& text, int rows, int cols) = 0;
+    virtual std::string decrypt(const std::string& text, int rows, int cols) = 0;
+    virtual ~Crypto() = default;
+};
+
+class SimpleSubstitution : public Crypto {
+private:
+    std::unordered_map<char, char> encryptMap;
+    std::unordered_map<char, char> decryptMap;
+
+public:
+    SimpleSubstitution() {
+        const std::string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const std::string key = "EQWRTYUOPIASDFGHJKLZXCVBNMeqwrtuopiasdfghjklzxcvbnm";
+
+        for (size_t i = 0; i < alphabet.length(); ++i) {
+            encryptMap[alphabet[i]] = key[i];
+            decryptMap[key[i]] = alphabet[i];
+        }
+    }
+
+    std::string encrypt(const std::string& plaintext, int, int) override {
+        std::string ciphertext;
+        for (char ch : plaintext) {
+            if (encryptMap.find(ch) != encryptMap.end()) {
+                ciphertext += encryptMap[ch];
+            } else {
+                ciphertext += ch;
+            }
+        }
+        return ciphertext;
+    }
+
+    std::string decrypt(const std::string& ciphertext, int, int) override {
+        std::string plaintext;
+        for (char ch : ciphertext) {
+            if (decryptMap.find(ch) != decryptMap.end()) {
+                plaintext += decryptMap[ch];
+            } else {
+                plaintext += ch;
+            }
+        }
+        return plaintext;
+    }
+};
+
+class CesarAlgorithm : public Crypto {
+private:
+    int key;
+
+public:
+    void setKey(int k) {
+        key = k;
+    }
+
+    std::string encrypt(const std::string &text, int, int) override {
+        std::string result;
+        int n = 256;
+        for (char c : text) {
+            result += static_cast<char>((c + key) % n);
+        }
+        return result;
+    }
+
+    std::string decrypt(const std::string &text, int, int) override {
+        std::string result;
+        int n = 256;
+        for (char c : text) {
+            result += static_cast<char>((c - key + n) % n);
+        }
+        return result;
+    }
+};
+
+class RLE {
+public:
+    static std::string encode(const std::string& str) {
+        std::string result;
+        int n = str.length();
+
+        for (int i = 0; i < n; i++) {
+            int count = 1;
+            while (i < n - 1 && str[i] == str[i + 1] && count < 255) {
+                count++;
+                i++;
+            }
+            result += str[i];
+            result += static_cast<char>(count);
+        }
+        return result;
+    }
+
+    static std::string decode(const std::string& str) {
+        std::string result;
+        for (size_t i = 0; i < str.length(); i++) {
+            char ch = str[i];
+            i++;
+            char count = str[i];
+            result += std::string(static_cast<unsigned char>(count), ch);
+        }
+        return result;
+    }
+};
+
+class RowColCrypt : public Crypto {
+public:
+    std::string encrypt(const std::string &text, int rows, int cols) override {
+        std::vector<std::vector<char>> matr(rows, std::vector<char>(cols, ' '));
+        int index = 0;
+
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                if (index < text.size()) {
+                    matr[i][j] = text[index++];
+                }
+            }
+        }
+
+        std::string newText;
+        for (int j = 0; j < cols; ++j) {
+            for (int i = 0; i < rows; ++i) {
+                newText += matr[i][j];
+            }
+        }
+        return newText;
+    }
+
+    std::string decrypt(const std::string &newText, int rows, int cols) override {
+        std::vector<std::vector<char>> matr(rows, std::vector<char>(cols, ' '));
+        int index = 0;
+
+        for (int j = 0; j < cols; ++j) {
+            for (int i = 0; i < rows; ++i) {
+                if (index < newText.size()) {
+                    matr[i][j] = newText[index++];
+                }
+            }
+        }
+
+        std::string text;
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                text += matr[i][j];
+            }
+        }
+        return text;
+    }
+};
+
+void displayMenu() {
+    std::cout << "Select encryption method:\n";
+    std::cout << "1. Simple Substitution\n";
+    std::cout << "2. Caesar Cipher\n";
+    std::cout << "3. Run-Length Encoding (RLE)\n";
+    std::cout << "4. Row and Column Transposition\n";
+    std::cout << "5. Exit\n";
+}
+
+int main() {
+    SimpleSubstitution simpleSubstitution;
+    CesarAlgorithm caesar;
+    RowColCrypt rowColCrypt;
+    RLE rle;
+
+    int option;
+    std::string text;
+    int key,rows, table_size;
+    std::string encoded;
+    std::string encryptedText;
+
+    while (true) {
+        displayMenu();
+        std::cout << "Enter your choice: ";
+        std::cin >> option;
+
+        switch (option) {
+        case 1:
+            std::cout << "Enter plaintext: ";
+            std::cin >> text;
+            std::cout << "Encrypted: " << simpleSubstitution.encrypt(text, 0, 0) << std::endl;
+            std::cout << "Decrypted: " << simpleSubstitution.decrypt(simpleSubstitution.encrypt(text, 0, 0), 0, 0) << std::endl;
+            break;
+        case 2:
+            std::cout << "Enter text: ";
+            std::cin >> text;
+            std::cout << "Enter key: ";
+            std::cin >> key;
+            caesar.setKey(key);
+            std::cout << "Encrypted: " << caesar.encrypt(text, 0, 0) << std::endl;
+            std::cout << "Decrypted: " << caesar.decrypt(caesar.encrypt(text, 0, 0), 0, 0) << std::endl;
+            break;
+        case 3:
+            std::cout << "Enter text: ";
+            std::cin >> text;
+            std::cout << "RLE Encoded: ";
+            encoded = rle.encode(text);
+            for (size_t i = 0; i < encoded.length(); i++) {
+                if (i % 2 == 0) {
+                    std::cout << encoded[i];
+                } else {
+                    std::cout << static_cast<int>(static_cast<unsigned char>(encoded[i]));
+                }
+            }
+            std::cout << std::endl;
+
+            std::cout << "RLE Decoded: " <<rle.decode(encoded) << std::endl;
+            break;
+        case 4:
+            std::cout << "Enter text: ";
+            std::cin >> text;
+            std::cout << "Enter table size (columns): ";
+            std::cin >> table_size;
+            rows = (text.length() + table_size - 1) / table_size;
+
+            encryptedText = rowColCrypt.encrypt(text, rows, table_size);
+            std::cout << "Encrypted: " << encryptedText << std::endl;
+            std::cout << "Decrypted: " << rowColCrypt.decrypt(encryptedText, rows, table_size) << std::endl;
+            break;
+        case 5:
+            return 0;
+        default:
+            std::cout << "Invalid choice. Please try again.\n";
+            break;
+        }
+    }
+
+    return 0;
+}
