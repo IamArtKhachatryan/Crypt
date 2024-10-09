@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+class Crypto {
+public:
+    virtual std::string encrypt(const std::string &text, int rows, int cols) = 0;
+    virtual std::string decrypt(const std::string &text, int rows, int cols) = 0;
+    virtual ~Crypto() = default;
+};
+
+class RowColCrypt : public Crypto {
+public:
+    std::string encrypt(const std::string &text, int rows, int cols) override {
+        
+        std::vector<std::vector<char>> matr(rows, std::vector<char>(cols, ' '));
+        int index = 0;
+
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                if (index < text.size()) {
+                    matr[i][j] = text[index++];
+                }
+            }
+        }
+
+        std::string newText;
+        for (int j = 0; j < cols; ++j) {
+            for (int i = 0; i < rows; ++i) {
+                newText += matr[i][j];
+            }
+        }
+        return newText;
+    }
+
+    std::string decrypt(const std::string &newText, int rows, int cols) override {
+        std::vector<std::vector<char>> matr(rows, std::vector<char>(cols, ' '));
+        int index = 0;
+
+        for (int j = 0; j < cols; ++j) {
+            for (int i = 0; i < rows; ++i) {
+                if (index < newText.size()) {
+                    matr[i][j] = newText[index++];
+                }
+            }
+        }
+
+        std::string text;
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                text += matr[i][j];
+            }
+        }
+        return text;
+    }
+};
+
+int main() {
+    RowColCrypt crypter;
+    std::string text = "Text for encrypt.";
+    int table_size = 3;
+
+    int rows = (text.length() + table_size - 1) / table_size;
+    int cols = table_size; 
+
+    std::string encryptedText = crypter.encrypt(text, rows, cols);
+    std::string decryptedText = crypter.decrypt(encryptedText, rows, cols);
+
+    std::cout << "Plaintext: " << text << std::endl;
+    std::cout << "Encrypted: " << encryptedText << std::endl;
+    std::cout << "Decrypted: " << decryptedText << std::endl;
+
+    return 0;
+}
