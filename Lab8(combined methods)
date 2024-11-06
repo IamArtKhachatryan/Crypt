@@ -1,0 +1,69 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <cctype>
+
+std::string caesarCipher(const std::string &text, int shift, bool encrypt) {
+    std::string result = text;
+    for (size_t i = 0; i < result.size(); i++) {
+        if (isalpha(result[i])) {
+            char base = islower(result[i]) ? 'a' : 'A';
+            int offset = result[i] - base;
+            int new_offset = (offset + (encrypt ? shift : -shift) + 26) % 26;
+            result[i] = base + new_offset;
+        }
+    }
+    return result;
+}
+
+std::string runLengthEncode(const std::string &input) {
+    std::stringstream encoded;
+    int count = 1;
+
+    for (size_t i = 1; i <= input.length(); i++) {
+        if (i < input.length() && input[i] == input[i - 1]) {
+            count++;
+        } else {
+            encoded << input[i - 1] << count;
+            count = 1;
+        }
+    }
+    return encoded.str();
+}
+
+std::string runLengthDecode(const std::string &input) {
+    std::stringstream decoded;
+    for (size_t i = 0; i < input.length(); i += 2) {
+        char character = input[i];
+        int count = input[i + 1] - '0'; 
+        for (int j = 0; j < count; j++) {
+            decoded << character;
+        }
+    }
+    return decoded.str();
+}
+
+std::string encodeMessage(const std::string &message, int shift) {
+    std::string caesarEncoded = caesarCipher(message, shift, true); 
+    return runLengthEncode(caesarEncoded);
+}
+
+std::string decodeMessage(const std::string &encodedMessage, int shift) {
+    std::string rleDecoded = runLengthDecode(encodedMessage); 
+    return caesarCipher(rleDecoded, shift, false); 
+}
+
+int main() {
+    std::string message = "Hello World!";
+    int shift = 3;
+
+    std::cout << "Original Message: " << message << std::endl;
+
+    std::string encodedMessage = encodeMessage(message, shift);
+    std::cout << "Encoded Message: " << encodedMessage << std::endl;
+
+    std::string decodedMessage = decodeMessage(encodedMessage, shift);
+    std::cout << "Decoded Message: " << decodedMessage << std::endl;
+
+    return 0;
+}
