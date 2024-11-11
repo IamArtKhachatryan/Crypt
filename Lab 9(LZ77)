@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+struct LZ77Tuple {
+    int offset;
+    int length;
+    char nextChar;
+};
+
+std::vector<LZ77Tuple> compress(const std::string& input, int windowSize) {
+    std::vector<LZ77Tuple> compressedData;
+    int inputSize = input.size();
+
+    for (int i = 0; i < inputSize; ) {
+        int matchLength = 0;
+        int matchOffset = 0;
+        for (int j = std::max(0, i - windowSize); j < i; ++j) {
+            int k = 0;
+            while (k < windowSize && i + k < inputSize && input[j + k] == input[i + k]) {
+                ++k;
+            }
+           // std::cout << k;
+            if (k > matchLength) {
+                matchLength = k;
+                matchOffset = i - j;
+            }
+        }
+        char nextChar = (i + matchLength < inputSize) ? input[i + matchLength] : '\0';
+        compressedData.push_back({matchOffset, matchLength, nextChar});
+        i += matchLength + 1;
+    }
+
+    return compressedData;
+}
+
+std::string decompress(const std::vector<LZ77Tuple>& compressedData) {
+    std::string decompressedData;
+    for (const auto& tuple : compressedData) {
+        int start = decompressedData.size() - tuple.offset;
+        for (int i = 0; i < tuple.length; ++i) {
+            decompressedData += decompressedData[start + i];
+        }
+        if (tuple.nextChar != '\0') {
+            decompressedData += tuple.nextChar;
+        }
+    }
+    return decompressedData;
+}
+
+int main() {
+    std::string input = "abracadabra";
+    int windowSize = 6;
+
+    auto compressedData = compress(input, windowSize);
+    std::cout << "Compressed data:\n";
+    for (const auto& tuple : compressedData) {
+        std::cout << "(" << tuple.offset << ", " << tuple.length << ", " << tuple.nextChar << ")\n";
+    }
+
+    std::string decompressedData = decompress(compressedData);
+    std::cout << "Decompressed data: " << decompressedData << "\n";
+
+    return 0;
+}
