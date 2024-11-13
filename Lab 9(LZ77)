@@ -1,65 +1,94 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
-struct LZ77Tuple {
-    int offset;
-    int length;
-    char nextChar;
+struct LZ77Token {
+    int offset;     
+    int length;     
+    char nextChar; 
 };
 
-std::vector<LZ77Tuple> compress(const std::string& input, int windowSize) {
-    std::vector<LZ77Tuple> compressedData;
-    int inputSize = input.size();
+class LZ77Compressor {
+public:
+    LZ77Compressor(int windowSize, int maxMatchLength)
+        : windowSize(windowSize), maxMatchLength(maxMatchLength) {}
 
-    for (int i = 0; i < inputSize; ) {
-        int matchLength = 0;
-        int matchOffset = 0;
-        for (int j = std::max(0, i - windowSize); j < i; ++j) {
-            int k = 0;
-            while (k < windowSize && i + k < inputSize && input[j + k] == input[i + k]) {
-                ++k;
+    std::vector<LZ77Token> compress(const std::string &input) {
+        std::vector<LZ77Token> compressedData;
+        int inputSize = input.size();
+        int pos = 0;
+
+        while (pos < inputSize) {
+            int matchLength = 0;
+            int matchOffset = 0;
+
+            for (int offset = std::min(pos, windowSize); offset >= 1; --offset) {
+                int length = 0;
+                while (length < maxMatchLength && pos + length < inputSize &&
+                       input[pos - offset + length] == input[pos + length]) {
+                    ++length;
+                }
+                if (length > matchLength) {
+                    matchLength = length;
+                    matchOffset = offset;
+                }
             }
-           // std::cout << k;
-            if (k > matchLength) {
-                matchLength = k;
-                matchOffset = i - j;
+
+            if (matchLength < 2) {
+                compressedData.push_back({0, 0, input[pos]});
+                pos += 1;
+            } else {
+                char nextChar = (pos + matchLength < inputSize) ? input[pos + matchLength] : '\0';
+                compressedData.push_back({matchOffset, matchLength, nextChar});
+                pos += matchLength + 1;
             }
         }
-        char nextChar = (i + matchLength < inputSize) ? input[i + matchLength] : '\0';
-        compressedData.push_back({matchOffset, matchLength, nextChar});
-        i += matchLength + 1;
+        return compressedData;
     }
 
-    return compressedData;
-}
-
-std::string decompress(const std::vector<LZ77Tuple>& compressedData) {
-    std::string decompressedData;
-    for (const auto& tuple : compressedData) {
-        int start = decompressedData.size() - tuple.offset;
-        for (int i = 0; i < tuple.length; ++i) {
-            decompressedData += decompressedData[start + i];
+    std::string getCompressedDataAsString(const std::vector<LZ77Token> &compressedData) {
+        std::stringstream compressedString;
+        for (const auto &token : compressedData) {
+            if (token.length == 0)
+                compressedString << token.nextChar;
+            else
+                compressedString << "[" << token.offset << "|" << token.length << "|" << token.nextChar << "] ";
         }
-        if (tuple.nextChar != '\0') {
-            decompressedData += tuple.nextChar;
-        }
+        return compressedString.str();
     }
-    return decompressedData;
-}
+
+    std::string decompress(const std::vector<LZ77Token> &compressedData) {
+        std::string output;
+        for (const auto &token : compressedData) {
+            int start = output.size() - token.offset;
+            for (int i = 0; i < token.length; ++i) {
+                output += output[start + i];
+            }
+            if (token.nextChar != '\0') {
+                output += token.nextChar;
+            }
+        }
+        return output;
+    }
+
+private:
+    int windowSize;
+    int maxMatchLength;
+};
 
 int main() {
-    std::string input = "abracadabra";
-    int windowSize = 6;
+    std::string input = "The compression and the decompression leave an impression. Hahahahaha!";
+    LZ77Compressor compressor(4096, 15);
 
-    auto compressedData = compress(input, windowSize);
-    std::cout << "Compressed data:\n";
-    for (const auto& tuple : compressedData) {
-        std::cout << "(" << tuple.offset << ", " << tuple.length << ", " << tuple.nextChar << ")\n";
-    }
+    std::vector<LZ77Token> compressedData = compressor.compress(input);
 
-    std::string decompressedData = decompress(compressedData);
-    std::cout << "Decompressed data: " << decompressedData << "\n";
+    std::string compressedString = compressor.getCompressedDataAsString(compressedData);
+
+    std::cout << "Compressed data as string:\n" << compressedString << "\n";
+
+    std::string decompressedData = compressor.decompress(compressedData);
+    std::cout << "Decompressed data:\n" << decompressedData << "\n";
 
     return 0;
 }
