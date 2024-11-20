@@ -85,7 +85,7 @@ std::string decode(const std::string& encodedStr, Node* root) {
 }
 
 int main() {
-    std::string input = "Artur ";
+    std::string input = "Artur Khachatryan";
     
     std::unordered_map<char, int> frequencies;
     for (char ch : input) {
