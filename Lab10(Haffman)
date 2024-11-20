@@ -1,1 +1,107 @@
+#include <iostream>
+#include <fstream>
+#include <queue>
+#include <vector>
+#include <unordered_map>
+#include <bitset>
 
+struct Node {
+    char data;
+    int freq;
+    Node* left;
+    Node* right;
+
+    Node(char data, int freq) {
+        this->data = data;
+        this->freq = freq;
+        left = right = nullptr;
+    }
+};
+
+struct Compare {
+    bool operator()(Node* l, Node* r) {
+        return l->freq > r->freq;
+    }
+};
+
+void generateHuffmanCodes(Node* root, std::string str, std::unordered_map<char, std::string>& huffmanCodes) {
+    if (!root)
+        return;
+
+    if (!root->left && !root->right)
+        huffmanCodes[root->data] = str;
+
+    generateHuffmanCodes(root->left, str + "0", huffmanCodes);
+    generateHuffmanCodes(root->right, str + "1", huffmanCodes);
+}
+
+Node* buildHuffmanTree(const std::unordered_map<char, int>& frequencies) {
+    std::priority_queue<Node*, std::vector<Node*>, Compare> pq;
+
+    for (const auto& pair : frequencies) {
+        pq.push(new Node(pair.first, pair.second));
+    }
+
+    while (pq.size() > 1) {
+        Node* left = pq.top();
+        pq.pop();
+        Node* right = pq.top();
+        pq.pop();
+
+        Node* internal = new Node('\0', left->freq + right->freq);
+        internal->left = left;
+        internal->right = right;
+        pq.push(internal);
+    }
+
+    return pq.top();
+}
+
+std::string encode(const std::string& input, const std::unordered_map<char, std::string>& huffmanCodes) {
+    std::string encodedStr;
+    for (char ch : input) {
+        encodedStr += huffmanCodes.at(ch);
+    }
+    return encodedStr;
+}
+
+std::string decode(const std::string& encodedStr, Node* root) {
+    std::string decodedStr;
+    Node* current = root;
+    
+    for (char bit : encodedStr) {
+        if (bit == '0') {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+
+        if (!current->left && !current->right) {
+            decodedStr += current->data;
+            current = root;
+        }
+    }
+    return decodedStr;
+}
+
+int main() {
+    std::string input = "Artur ";
+    
+    std::unordered_map<char, int> frequencies;
+    for (char ch : input) {
+        frequencies[ch]++;
+    }
+
+    Node* root = buildHuffmanTree(frequencies);
+
+    std::unordered_map<char, std::string> huffmanCodes;
+    generateHuffmanCodes(root, "", huffmanCodes);
+
+    std::string encodedStr = encode(input, huffmanCodes);
+    std::cout << "Encoded string: " << encodedStr << std::endl;
+
+    std::string decodedStr = decode(encodedStr, root);
+    std::cout << "Decoded string: " << decodedStr << std::endl;
+
+    return 0;
+}
