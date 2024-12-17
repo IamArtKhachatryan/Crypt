@@ -1,6 +1,6 @@
 #include <iostream>
 #include "UDPServer.h"
-#include "UDPCommon.h"
+#define BUFLEN 1024
 
 #define SERVER_PORT 8888
 
